@@ -1,11 +1,15 @@
 import matplotlib.pyplot as plt
 class LogPlot():
-    def __init__(self,ncols=1,vert_size=60):
+    def __init__(self,ncols=1,nrows=1,vert_size=60,harsize=60):
         self.ax=[]
         self.colors=['#800000',	'#008080','#000080','#FF00FF','#800080','#00FFFF','#FFFF00','#FF0000','#00FF00','#008000','#0000FF','#808000','#C0C0C0','#D3D3D3',]
-        fig, self.ax = plt.subplots(nrows=1, ncols=ncols, figsize=(3*ncols,vert_size), sharey=True)
-        fig.subplots_adjust(top=0.75,wspace=0.1)
-        plt.gca().invert_yaxis()
+        if nrows>1:
+            fig, self.ax = plt.subplots(nrows=nrows, ncols=1, figsize=(harsize,3*nrows), sharey=True)
+            fig.subplots_adjust(top=0.75,wspace=0.1)
+        else:
+            fig, self.ax = plt.subplots(nrows=1, ncols=ncols, figsize=(3*ncols,vert_size), sharey=True)
+            fig.subplots_adjust(top=0.75,wspace=0.1)
+            plt.gca().invert_yaxis()
         # self.ax[0].invert_yaxis()
 
     def basicPlot(ax,depth,prop,lcolor='#800000'):
@@ -39,6 +43,7 @@ class LogPlot():
                 try:
                     keycol=single_las.keys()[find_keyIndxWithStr(single_las,key)[1]]
                     log_col=str_array2floats(single_las[keycol])            
+                    self.basicPlot(self.ax[i],depth,log_col,lcolor=self.colors[i])
                     self.basicPlot(self.ax[i],depth,log_col,lcolor=self.colors[i])
                 except:
                     pass

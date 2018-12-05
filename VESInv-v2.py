@@ -1,7 +1,7 @@
 from PyQt5.QtCore import QRect, QSize, QDir, Qt,QPointF,QRectF
 from PyQt5.QtGui import QImage, QPainter, QPalette, QPixmap, QColor,QIcon
 
-from PyQt5.QtWidgets import (QAction, QApplication, QFrame,QFileDialog, QLabel,QLayout,QToolBar,
+from PyQt5.QtWidgets import (QAction, QApplication, QFrame, QFileDialog, QLabel,QLayout,QToolBar,
         QMainWindow, QMenu, QMessageBox, QScrollArea, QSizePolicy,QInputDialog,QHBoxLayout,
         QPushButton,QLineEdit,QListWidget,QListWidgetItem,QGridLayout,QWidget,QGraphicsItem ,QWidgetItem,QTextBrowser)
 
@@ -229,10 +229,7 @@ class VESViewer(QMainWindow):
                 triggered=self.close)
         self.openFileAct = QAction("&Open", self, shortcut="Ctrl+O",
                 triggered=self.file_open)
-        self.aboutAct = QAction("&About", self, triggered=self.about)
-
-
-        
+        self.aboutAct = QAction("&About", self, triggered=self.about)     
 
 
         self.do_inversion_action = QAction(QIcon(os.path.join('ves_imgs', 'invert-tool.png')), "&Invert", self,shortcut="Ctrl+I",

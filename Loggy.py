@@ -7,17 +7,23 @@ from PyQt5.QtPrintSupport import QPrintDialog, QPrinter
 from PyQt5.QtWidgets import (QAction, QApplication, QDialog, QDockWidget,QWidgetItem,
         QScrollArea,QVBoxLayout,QHBoxLayout,
         QFileDialog, QListWidget, QMainWindow, QMessageBox, QTextEdit,QLabel,QWidget)
-# import pyqtgraph as pg
+# import other useful ones
 import numpy as np
 from PIL.ImageQt import ImageQt
 from scipy.misc.pilutil import toimage
-import dockwidgets_rc
 import lasio
 import os
 import pyqtgraph as pg
 from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
+import time
+# From files of app
+import dockwidgets_rc
+from LasLoadThread import LasLoadThread
 from helper import *
 from LogPlot import LogPlot
+from LasTree import LasTree
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -48,11 +54,16 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.scrollArea)
 
         self.setCentralWidget(self.centralWidget)
-        self.createDockWindows()
         self.wellLoad()
-        self.logFileList.itemSelectionChanged.connect(self.lasLoad)
+        self.logtree = LasTree(['GR','NPHI'])
+        self.logtree.buildTreeWidget()
+        self.logtree.tree.itemSelectionChanged.connect(self.logPlot)
+
+        self.createDockWindows()
+        
+        # self.logFileList.itemSelectionChanged.connect(self.lasLoad)
         # if not self.las_just_selected:
-        self.logList.itemSelectionChanged.connect(self.logPlot)
+        # self.logList.itemSelectionChanged.connect(self.logPlot)
 
 
         self.setWindowTitle("Loggy")
@@ -61,32 +72,76 @@ class MainWindow(QMainWindow):
     def wellLoad(self):
         self.wellFolder=r'D:\Ameyem Office\Projects\Cairn\W1\LAS\\'
         
-        files=os.listdir(self.wellFolder)[:]
-        self.logFileList.addItems(files)
+        self.files=np.array(os.listdir(self.wellFolder)[:])
+        files_w_path=[self.wellFolder+f for f in self.files]
+        # print(files_w_path)
+        # self.logFileList.addItems(self.files)
+
+        # folder=r'D:\Ameyem Office\Projects\Cairn\W1\LAS\\'
+        cols=[]
+        # las=[]
+        # log.df().sort_values([log.keys()[dindx]])
+        # log.keys()
+        self.files=np.array(os.listdir(self.wellFolder)[:])
+        self.lastree = LasTree(self.files)
+        self.lastree.buildTreeWidget()
+        self.lastree.tree.itemSelectionChanged.connect(self.lasLoad)
         
+
+
+        self.lasLoadThread = LasLoadThread(files=files_w_path)
+    # def lasBackgroundLoad():
+        
+
     def lasLoad (self):        
-        las_name=self.logFileList.selectedItems()[0].text()
-        self.las=lasio.read(self.wellFolder+las_name)
-        if len(self.logList.selectedItems())>0:
-            item = self.logList.selectedItems()[0]
-            print(dir(item))
+        las_name=self.lastree.tree.selectedItems()[0].text(0) #self.logFileList.selectedItems()[0].text() 
+        if las_name in ['TVD','MD','LWD','WireLine']:
+            return      
+
+        findex=np.where(self.files==las_name)[0][0]
+        # print(findex)
+        Loaded=False
+        while(not Loaded):
+            if(findex<len(self.lasLoadThread.Lases)):
+                self.las=self.lasLoadThread.Lases[findex]
+                Loaded=True
+            else:
+                self.logtree.clear()
+                # self.logtree.addItems(['Loading....'])
+                time.sleep(1)
+        
+        if len(self.logtree.selectedItems())>0:
+            item = self.logtree.selectedItems()[0]
+            # print(dir(item))
             item.setSelected= False
-        self.logList.clear()
-        self.logList.addItems(self.las.keys() )
-        dcol=self.las.keys()[find_depth_indx(self.las)]
-        self.depth_col=str_array2floats(self.las[dcol])
+        # self.logList.clear()
+        # self.logList.addItems(self.las.keys() )
+        if not (len(self.las.keys())<1):
+            self.logtree = LasTree(self.las.keys())
+            self.logtree.buildTreeWidget()
+            # self.logtree.tree.itemSelectionChanged.connect(self.logPlot)
+
+            dcol=self.las.keys()[find_depth_indx(self.las)]
+            self.depth_col=str_array2floats(self.las[dcol])
+        # else:
+            
+        
         # self.las_just_selected = True
 
         
         
     def logPlot(self):
+        
         # print(self.mw.getFigure().)
         # pass
         # if not self.las_just_selected:
-        if len(self.logList.selectedItems())>0:
-            keycol=self.logList.selectedItems()[0].text()
-            self.log_col=str_array2floats(self.las[keycol])            
-            self.ax=LogPlot.basicPlot(self.ax,self.depth_col,self.log_col,lcolor='#800000')
+        if len(self.logtree.selectedItems())>0:
+            keycol=self.logtree.selectedItems()[0].text(0)
+            try:
+                self.log_col=str_array2floats(self.las[keycol])            
+                self.ax=LogPlot.basicPlot(self.ax,self.depth_col,self.log_col,lcolor='#800000')
+            except:
+                print('Unable to convert log to floats')
         # else:
         #     self.las_just_selected=False
 
@@ -102,16 +157,27 @@ class MainWindow(QMainWindow):
         
         dock = QDockWidget("Log Files", self)
         dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
-        self.logFileList = QListWidget(dock)
+
+        # self.logFileList = self.lastree.tree #QListWidget(dock)
         # self.customerList.addItems(('Hello','How are you'))
-        dock.setWidget(self.logFileList)
+        dock.setWidget(self.lastree.tree)
+        # 
         self.addDockWidget(Qt.LeftDockWidgetArea, dock)
         # self.viewMenu.addAction(dock.toggleViewAction())
 
         dock = QDockWidget("Logs", self)
-        self.logList = QListWidget(dock)
-        self.logList.addItems(('Good morning','Hope you are doing well'))
-        dock.setWidget(self.logList)
+
+        # self.logList = QListWidget(dock)
+        # self.logList.addItems(('Good morning','Hope you are doing well'))
+        
+        dock.setWidget(self.logtree.tree)
+
+        
+        # self.logList = QListWidget(dock)
+        # self.logList.addItems(('Good morning','Hope you are doing well'))
+        # dock.setWidget(self.logList)
+
+
         self.addDockWidget(Qt.LeftDockWidgetArea, dock)
         # self.viewMenu.addAction(dock.toggleViewAction())
 
