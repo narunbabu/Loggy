@@ -27,8 +27,9 @@ class LasLoadThread(object):
          # Start the execution
         for f in self.files:
             # Do something
-            print('Loading in background')
+            print('Las being loaded in background')
             self.Lases.append(lasio.read(f))
+        print('Loading complete...')
             # time.sleep(self.interval)
 
 

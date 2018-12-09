@@ -15,9 +15,27 @@ def write_txtdict(file,text_dict,delimiter=','):
         for key in text_dict:
             line="{} = {} \n".format(key,delimiter.join(text_dict[key]).strip())
             f.writelines(line)
+def treeWidgetFrmArray(tree,heading,elementarray):
+    tree.headerItem().setText(0, "Logs")  
+    parent = QTreeWidgetItem(tree)     
+    parent=parentWidgetFrmArray(parent,heading,elementarray)
+    
+    return tree
+def parentWidgetFrmArray(parent,heading,elementarray):       
+    parent.setText(0, heading)
+    # parent.setFlags(parent.flags())
+    parent.setFlags(parent.flags() | Qt.ItemIsTristate | Qt.ItemIsUserCheckable)
+    parent.setCheckState(0, Qt.Unchecked)
+    for element in elementarray:
+        child = QTreeWidgetItem(parent)
+        # child.setFlags(child.flags() | Qt.ItemIsTristate | Qt.ItemIsUserCheckable )
+        child.setText(0, element)
+    return parent
+    
+
 def treeWidgetFrmDict(tree,treeview_dict): #QTreeWidgetItem()
         # item    = QTreeWidgetItem()
-        tree.headerItem().setText(0, "Categories")
+        
         for key in treeview_dict:
             parent = QTreeWidgetItem(tree)
             parent.setText(0, key)
@@ -57,19 +75,19 @@ class LasTree():
         
 
         
-        # self.tree.itemSelectionChanged.connect(self.lasLoad)
+        # 
 
         # thread = threading.Thread(target=self.run, args=())
         # thread.daemon = True                            # Daemonize thread
         # thread.start()  
     # def lasLoad(self):
     #     print(self.tree.selectedItems()[0].text(0))
-    def set_files(self,lasfiles):
+    def set_files(self,lasfiles,make_tree_dict=True):
         self.files=lasfiles 
-        self.make_lastree_dict() 
+        if make_tree_dict:
+            self.make_lastree_dict() 
 
-    def make_lastree_dict(self):
-        
+    def make_lastree_dict(self):        
         def get_loggingtype(file_str,logging_type_dict):
             # filewords=multi_split(file_str,delims=['_','-','.'])
             for key in logging_type_dict.keys():
