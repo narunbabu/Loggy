@@ -41,14 +41,15 @@ class FlexArray():
 #             self.flexarray[self.flexarrIndexRangeArray[i]:self.flexarrIndexRangeArrayi+1]]
     def find_leftright_indxs(self,value):
         steparray=self.flexarray[self.flexarrIndexRangeArray]
-#         print(steparray)
+        # print('step array : ',steparray)
+        # print('val =',value)
         li,ri=self.find_indx_leftright(steparray,value)
         # if li==ri:
         #     return 0,0
 #         print(li,ri,self.flexarrIndexRangeArray[[li,ri]])
         
         smallarray=self.flexarray[self.flexarrIndexRangeArray[li]:self.flexarrIndexRangeArray[ri]+1]
-#         print('hey',smallarray)
+        # print('hey',smallarray)
         lgi,rgi=self.find_indx_leftright(smallarray,value)
         return self.flexarrIndexRangeArray[li]+lgi,self.flexarrIndexRangeArray[li]+rgi     
 
@@ -69,11 +70,12 @@ class FlexArray():
             else:
                 return self.flexarray[[self.find_leftright_indxs(self,value)]]
         
-class FlexXY(FlexArray):
-    def __init__(self,XY):
+class FlexXY(FlexArray): 
+    def __init__(self,XY):# XY should be an (N,2) shape np array
         self.XY=XY
         super(FlexXY,self).__init__(self.XY[:,0])
     def get_LRofXYs(self,xvalue):
+        
         if (xvalue<self.XY[0,0]):
             return np.array([[self.XY[0,0]-self.stepsize,np.nan],[self.XY[0,0],self.XY[0,1]] ])
         elif(xvalue>self.XY[-1,0]):            
@@ -92,6 +94,7 @@ class FlexXY(FlexArray):
         
     
     def resampleY(self,new_xarray):
+        # print(new_xarray)
         newY=np.zeros(len(new_xarray))
         for i in range(len(new_xarray)):
             newY[i]=self.predictYgivenX(new_xarray[i])
