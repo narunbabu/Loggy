@@ -8,7 +8,7 @@ from Filters import *
 projectFolder=r'D:\Ameyem Office\Projects\Cairn\W1\\'
 log_bundle=np.load(projectFolder+'proc_logs_bundle.npy')
 print(log_bundle[0].keys())
-logname='VPVS';depthcol_name='DEPTH'
+logname='GR';depthcol_name='DEPTH'
 
 
 def common_depth_of_bundles(log_bundle):
@@ -35,6 +35,7 @@ def getCurveWRange(deptharr,dataarr,drange):
     indxs= (deptharr>=drange[0]) & (deptharr<=drange[1])
     
     d,a=deptharr[indxs],dataarr[indxs]
+    print(np.unique(np.diff(d)))
     dt=d[1]-d[0]
     nan_indxs=np.isnan(a)
     return d[~nan_indxs],a[~nan_indxs],dt
