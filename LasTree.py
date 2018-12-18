@@ -2,6 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QTreeWidget,QTreeWidgetItem,QApplication)
 # import threading
 import os
+from loggy_settings import lwdVSwirelineFile, mnomonicsfile
 def get_txtdict(file,delimiter=','):
             with open(file,'r') as f:
                 lines=f.readlines()
@@ -117,7 +118,7 @@ class LasTree():
         if len(self.files[0])>4:
             if (self.files[0][-4:].lower()=='.las')|(self.files[0][-4:].lower()=='dlis'):
                 self.isitfile=True
-                self.lwdVSwirelineFile= r'D:\Ameyem Office\Projects\Cairn/lwd_wireline_differentiators.txt'
+                self.lwdVSwirelineFile= lwdVSwirelineFile
                 tvd_files=[]
                 nontvd_files=[]
                 for f in self.files:
@@ -135,8 +136,10 @@ class LasTree():
                 'TVD':{       }        
                 }
                 las_r_log_groups=[nontvd_files,tvd_files]
-        else: #Log category
-            self.mnemonicsFile=r'D:\Ameyem Office\Projects\Cairn\mnemonics.txt'
+            else:
+                self.isitfile=False
+        if not self.isitfile: #Log category
+            self.mnemonicsFile=mnomonicsfile
             type_dict=get_txtdict(self.mnemonicsFile,delimiter=' ')
             las_r_log_groups=[self.files]
             self.treeview_dict={

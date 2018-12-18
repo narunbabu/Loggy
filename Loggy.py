@@ -70,7 +70,7 @@ class MainWindow(QMainWindow):
 
         # self.newLetter()
     def wellLoad(self):
-        self.wellFolder=r'D:\Ameyem Office\Projects\Cairn\W1\LAS\\'
+        self.wellFolder=r'E:\Data\W1\LAS\\'
         
         self.files=np.array(os.listdir(self.wellFolder)[:])
         files_w_path=[self.wellFolder+f for f in self.files]

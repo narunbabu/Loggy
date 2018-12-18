@@ -23,22 +23,15 @@ from flex import FlexLog
 from LasTree import LasTree,treeWidgetFrmArray
 from LateralCorr import lag_ix,get_delay,mean_norm
 from Filters import *    
-
-class VerticalCorr(QMainWindow):
+from loggy_settings import *
+class VerticalCorrNSplice(QMainWindow):
     def __init__(self,parent=None):
-        super(VerticalCorr, self).__init__(parent)
-        from loggy_settings import well_folder, lwdVSwirelineFile, mnomonicsfile
+        super(VerticalCorrNSplice, self).__init__(parent)
+        
         # projectFolder=r'D:\Ameyem Office\Projects\Cairn\W1\\'
 
-        self.log_bundle=np.load(well_folder+'..\proc_logs_bundle.npy')
-        self.flt_logs={}   
-     
-        for logname in self.log_bundle[0]['keys']:
-            print(logname)
-            self.flt_logs[logname]=[[] for i in range(len(self.log_bundle))]
+        self.log_bundle=np.load(proc_logs_bundle_file)
 
-
-            
         print('Starting main window...')
 
 
@@ -66,7 +59,6 @@ class VerticalCorr(QMainWindow):
       
         self.createDockWindows()
         
-        self.run_mass_filter()
 
         
     def getFormLayerFilled(self):
@@ -158,29 +150,21 @@ class VerticalCorr(QMainWindow):
         self.filtw = MatplotlibWidget(size=(22.0, 4), dpi=100  ) 
         self.filtscrollArea.setWidget(self.filtw)
         ax=self.filtw.getFigure().add_subplot(1,1,1)
-        
+        flt_arrs=[]
                    
         hist_bins=np.int(self.n_hist_segments_le.text())
         n_big_patches=np.int(self.n_patches2retain_le.text())
-        self.flt_logs[self.logname]=[]
-        for i,lb in enumerate(self.log_bundle):
-            self.flt_logs[self.logname][i]=hist_filter(lb[self.logname].copy(),n_big_patches=n_big_patches,hist_bins=hist_bins)
-            ax.plot(lb[depthcol_name],self.flt_logs[self.logname][i])
+        for lb in self.log_bundle:
+            flt_arrs.append(hist_filter(lb[self.logname].copy(),n_big_patches=n_big_patches,hist_bins=hist_bins))
+            ax.plot(lb[depthcol_name],flt_arrs[-1])
         # print(flt_arrs)
     
-    def run_mass_filter(self):
-        hist_bins=np.int(self.n_hist_segments_le.text())
-        n_big_patches=np.int(self.n_patches2retain_le.text())    
-        
-        for i,lb in enumerate(self.log_bundle):            
-            for logname in lb['keys']:
-                self.flt_logs[logname][i]=hist_filter(lb[logname].copy(),n_big_patches=n_big_patches,hist_bins=hist_bins)
+   
             
 
     def logPlotPanel(self):
         print('Initiating plot widget...')
         self.logname=self.lastree.tree.selectedItems()[0].text(0)
-        
         depthcol_name='DEPTH'
         # firstlog
         logdata=[]
@@ -189,17 +173,9 @@ class VerticalCorr(QMainWindow):
         self.logscrollArea.setWidget(self.mw)
         self.ax=self.mw.getFigure().add_subplot(1,1,1)
 
-        self.filtw = MatplotlibWidget(size=(22.0, 4), dpi=100  ) 
-        self.filtscrollArea.setWidget(self.filtw)
-        ax2=self.filtw.getFigure().add_subplot(1,1,1)
-
-        for i,lb in enumerate(self.log_bundle):
+        for lb in self.log_bundle:
             # print(lb[self.logname],lb[depthcol_name]) 
             self.ax.plot(lb[depthcol_name],lb[self.logname])
-            ax2.plot(lb[depthcol_name],self.flt_logs[self.logname][i])
-        
-
-            
 
             # logdata=np.append([logdata],[lb[logname]],axis=0  )     
             # depthdata=np.append([depthdata],[lb[depthcol_name] ],axis=0  ) 
@@ -274,9 +250,6 @@ class VerticalCorr(QMainWindow):
             self.lastree.tree=treeWidgetFrmArray(self.lastree.tree,'({0:4.1f} to {1:4.1f})'.format(mind,maxd),lb['keys'])
         self.lastree.tree.itemSelectionChanged.connect(self.logPlotPanel)
         self.dock.setWidget(self.lastree.tree)
-        print(dir(self.lastree.tree))
-        print(help(self.lastree.tree.itemAt))
-        print(self.lastree.tree.itemAt(1,0).text(0))
         
 
         
@@ -302,7 +275,7 @@ if __name__ == '__main__':
     import sys
 
     app = QApplication(sys.argv)
-    mainWin = VerticalCorr()   
+    mainWin = VerticalCorrNSplice()   
 
     mainWin.buildLogTree()
     # mainWin.logCorrelations()

@@ -3,6 +3,11 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import sys
 from LasTree import treeWidgetFrmDict,get_txtdict,write_txtdict
+
+import lasio
+from loggy_settings import well_folder, lwdVSwirelineFile, mnomonicsfile    
+import numpy as np
+from helper import *
 # from LasTreeimport get_txtdict as getlogdict
 # qt_app = QApplication(sys.argv)
 # def write_txtdict(file,delimiter=','):
@@ -13,6 +18,7 @@ from LasTree import treeWidgetFrmDict,get_txtdict,write_txtdict
 #                     [key,val]=l.split('=')
 #                     file_dict[key.strip()]=[v.strip() for v in val.split(delimiter)]
 #             return file_dict
+
 
 class Categorize(QMainWindow):
 
@@ -68,16 +74,22 @@ class Categorize(QMainWindow):
         # .treeview_dict
         self.mnemonicsfile=mnemonicsfile
         self.base_categories=get_txtdict(self.mnemonicsfile,delimiter=' ')
-        print(self.base_categories)
-        self.logs=tree.treeview_dict['Log']['NA']
+        # print(self.base_categories)\
+        try:
+            self.logs=tree.treeview_dict['Log']['NA']
+        except:
+            self.logs=[' ']
         self.category_dict=tree.treeview_dict
         for bkey in self.base_categories.keys():
             self.removedmnemonicdict[bkey]=[]
             if bkey not in tree.treeview_dict['Log'].keys():
                 self.category_dict['Log'][bkey]=[]                
-        del self.category_dict['Log']['NA']
+        try:
+            del self.category_dict['Log']['NA']
+        except:
+            print('NA Not present')
 
-        print(self.category_dict)
+        # print(self.category_dict)
         self.catelogsw=  treeWidgetFrmDict(self.catelogsw,self.category_dict)
         self.catelogslayout.addWidget(self.catelogsw)
         self.listlogw.addItems(self.logs)
@@ -91,7 +103,7 @@ class Categorize(QMainWindow):
         log_labels=[llist.text() for llist in self.listlogw.selectedItems()]
         self.category_dict['Log'][category]=log_labels
         self.catelogsw.clear()
-        print(self.category_dict)
+        # print(self.category_dict)
         self.catelogsw=  treeWidgetFrmDict(self.catelogsw,self.category_dict)
         for litem in self.listlogw.selectedItems():
             # for SelectedItem in self.ListDialog.ContentList.selectedItems():
@@ -162,16 +174,68 @@ class Categorize(QMainWindow):
 # # print(inputtree_dict)
 # app = Categorize(treeview_dict,mnomonicsfile)
 # app.run()
+class LogCategorize():
+    def __init__(self,mnemonicsfile):
+          
+        self.mnemonicsfile=mnemonicsfile
+        self.base_categories=get_txtdict(self.mnemonicsfile,delimiter=' ')
+    def set_las(self,las ):
+        self.las=las
+    def get_catePresent(self):
+        cate_present=[]
+        for key in self.treeview_dict:
+            if (len(self.treeview_dict[key])>0)&(key!='NA'):
+                cate_present.append(key)
+
+        return cate_present
+    def get_lasdepthrange(self):
+        dindx=find_depth_indx(self.las)
+        return (self.las[dindx][0],self.las[dindx][-1])
+    def get_curverange(self,key):
+        dindx=find_depth_indx(self.las)
+        data_indxs=~np.isnan(self.las[key])
+        return (self.las[dindx][data_indxs][0],self.las[dindx][data_indxs][-1])
+    def lasCategorize(self): 
+        type_dict=get_txtdict(self.mnemonicsfile,delimiter=' ')
+        las_r_log_groups=list(self.las.keys())
+        self.treeview_dict={}            
+        for k in type_dict.keys(): self.treeview_dict[k]=[] 
+        self.treeview_dict['NA']=[]
+        for key in las_r_log_groups:
+            found=False
+            for k in type_dict.keys():                 
+                if key in type_dict[k]:
+                    self.treeview_dict[k].append(key)
+                    found=True
+                    break
+            if not found:
+               self.treeview_dict['NA'].append(key)
 
 def main():
-    treeview_dict={'Log': {'GR': ['GR_ARC'], 'RHOB': ['RHOB', 'ROBB'], 'NPHI': ['TNPH'], 'NA': ['DEPT', 'ROP5_RM', 'A16H', 'A22H', 'A28H', 'A34H', 'A40H', 'P16H', 'P22H', 'P28H', 'P34H', 'P40H', 'A16L', 'A22L', 'A28L', 'A34L', 'A40L', 'P16L', 'P22L', 'P28L', 'P34L', 'P40L', 'ECD_ARC', 'APRS_ARC', 'ATMP', 'DRHO', 'DRHB', 'DCHO', 'DCVE', 'DCAV', 'VERD', 'HORD']}}
-    mnomonicsfile=r'D:\Ameyem Office\Projects\Cairn/mnemonics.txt'
+    # treeview_dict={'Log': {'GR': ['GR_ARC'], 'RHOB': ['RHOB', 'ROBB'], 'NPHI': ['TNPH'], 'NA': ['DEPT', 'ROP5_RM', 'A16H', 'A22H', 'A28H', 'A34H', 'A40H', 'P16H', 'P22H', 'P28H', 'P34H', 'P40H', 'A16L', 'A22L', 'A28L', 'A34L', 'A40L', 'P16L', 'P22L', 'P28L', 'P34L', 'P40L', 'ECD_ARC', 'APRS_ARC', 'ATMP', 'DRHO', 'DRHB', 'DCHO', 'DCVE', 'DCAV', 'VERD', 'HORD']}}
+    # mnomonicsfile=r'D:\Ameyem Office\Projects\Cairn/mnemonics.txt'
 
-    app = QApplication(sys.argv)
-    main = Categorize()
-    main.set_params(treeview_dict,mnomonicsfile)
-    main.show()
-    sys.exit(app.exec_())
+    # app = QApplication(sys.argv)
+    # main = Categorize()
+    # main.set_params(treeview_dict,mnomonicsfile)
+    # main.show()
+    # sys.exit(app.exec_())
 
+
+    files_w_path=well_folder+'W1_SUITE2_COMPOSITE.las'
+
+    las=lasio.read(files_w_path)
+
+    lc=LogCategorize(mnomonicsfile)
+    lc.set_las(las)
+    lc.lasCategorize()
+    print(lc.treeview_dict)
+    print(lc.get_catePresent())
+    print( lc.get_lasdepthrange())
+    print( lc.get_curverange('CAL'))
+    lcates=lc.get_catePresent()
+    for l in lcates:
+        for key in lc.treeview_dict[l]:
+            print('{}: {}'.format(key, lc.get_curverange(key)))
 if __name__ == '__main__':
     main()

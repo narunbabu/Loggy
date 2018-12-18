@@ -15,11 +15,12 @@ from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
 import time
 # From files of app
 import dockwidgets_rc
-from LasLoadThread import LasLoadThread
+# from LasLoadThread import LasLoadThread
 from helper import *
 from flex import FlexLog
 # from LogPlot import LogPlot
 from LasTree import LasTree
+from loggy_settings import *
 def lag_ix(x,y,corrtype='+ve',dist2look=50):
         
     fullcorr = np.correlate(x,y,mode='full')
@@ -75,9 +76,9 @@ def mean_norm(A):
             
 
 class LateralCorr(QMainWindow):
-    def __init__(self,well_folder,parent=None):
+    def __init__(self,parent=None):
         super(LateralCorr, self).__init__(parent)
-        self.wellFolder=well_folder
+        # self.wellFolder=well_folder
         print('Starting main window...')
         self.centralWidget = QWidget()
         self.setCentralWidget(self.centralWidget)
@@ -156,19 +157,34 @@ class LateralCorr(QMainWindow):
         proc_logs['vlues_size']=np.size(self.las.values())
         proc_logs['keys']=self.interestedKeynames
         # proc_logs['test']='yes'
-        bundle_file=self.wellFolder+'../proc_logs_bundle.npy'
+        bundle_file=proc_logs_bundle_file
         repeated=False
         if os.path.isfile(bundle_file):
             logbundle=np.load(bundle_file)
+            print('______________________^^^^__________________________')
+            print(len(logbundle))
             for i,lb in enumerate(logbundle):
                 if lb['vlues_size']==proc_logs['vlues_size']:
                     repeated=True
+                    print('________________________________________________')
                     print('It is repeated so updated but not created...')
                     logbundle[i]=proc_logs
+                    break
+                # else:
+                #     print('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+                #     print('It is not repeated so  created...')
+                
         else:
             logbundle=[]
         if not repeated:
-            logbundle=np.append(logbundle,proc_logs)
+            if (len(logbundle)>0):
+                if proc_logs['DEPTH'][0]>logbundle[-1]['DEPTH'][0]:
+                    logbundle=np.append(logbundle,proc_logs)
+                else:
+                    logbundle=np.append(proc_logs,logbundle)
+            else:
+                logbundle=np.append(proc_logs,logbundle)
+                
         np.save(bundle_file,logbundle)
         print('Processed logs saved.. you can move on to next set...')
         time.sleep(2)
@@ -241,35 +257,21 @@ class LateralCorr(QMainWindow):
         self.mw.draw()
         print('Complete...')
 
-    def buildLogTree(self,files_w_path):
+    def buildLogTree(self,lases):
         w = LasTree()
-        self.lasLoadThread = LasLoadThread(files=files_w_path)
-        # print(self.lasLoadThread.Lases)
-        notloaded=True
-        
+        # self.lasLoadThread = LasLoadThread(files=files_w_path)
 
-        while notloaded:
-            if (len(self.lasLoadThread.Lases)>0):
-                if (len(self.lasLoadThread.Lases[0].keys())>0):
-                    self.las=self.lasLoadThread.Lases[0]      
-                    # print(self.logs) 
-                    w.set_files(self.las.keys())
-                    del w.treeview_dict['Log']['NA']
-                    self.treeview_dict=w.treeview_dict
-                    
-                    w.buildTreeWidget()  
-                    # print(self.interestedLognames)              
-                    # w.tree.clear()
-                    # w.buildTreeWidget()
-                    notloaded=False
-            time.sleep(1)
-        # print(w.treeview_dict)
-        
+        self.lases=lases
+        if (len(self.lases)>0):
+            if (len(self.lases[0].keys())>0):
+                self.las=self.lases[0]      
+                w.set_files(self.las.keys())
+                del w.treeview_dict['Log']['NA']
+                self.treeview_dict=w.treeview_dict
+                
+                w.buildTreeWidget()          
 
-        self.dock.setWidget(w.tree) 
-        
-    # def create_plotWindow(self):
-        
+        self.dock.setWidget(w.tree)         
         
     def createDockWindows(self):        
         self.dock = QDockWidget("Log Files", self)
@@ -295,13 +297,18 @@ if __name__ == '__main__':
     
     # wellFolder=r'D:\Ameyem Office\Projects\Cairn\W1\LAS\\'
     
-    from loggy_settings import well_folder, lwdVSwirelineFile, mnomonicsfile
-    mainWin = LateralCorr(well_folder)
+    # from loggy_settings import well_folder, lwdVSwirelineFile, mnomonicsfile
+    
+
     files=np.array(os.listdir(well_folder)[:])
     
 
     files_w_path=[well_folder+'W1_SUITE2_COMPOSITE.las']
-    mainWin.buildLogTree(files_w_path)
+    files_w_path=[well_folder+files[0]]
+    lases=[lasio.read(files_w_path[0])]
+
+    mainWin = LateralCorr()
+    mainWin.buildLogTree(lases)
     mainWin.logCorrelations()
     mainWin.show()
     sys.exit(app.exec_())
