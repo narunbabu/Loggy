@@ -1,5 +1,5 @@
 well_folder=r'D:\Ameyem Office\Projects\Cairn\W1\LAS\\'
-mnomonicsfile=well_folder+'../../mnemonics.txt'
+mnomonicsfile=well_folder+'../../mnemonics_revised.txt'
 lwdVSwirelineFile=well_folder+'../../lwd_wireline_differentiators.txt'
 params_file_path='D:\Ameyem Office\Projects\Cairn\log_params.npy'
 proc_logs_bundle_file=well_folder+'../proc_logs_bundle.npy'
